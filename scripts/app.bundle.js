@@ -3317,7 +3317,7 @@ function renderFooter() {
  * @returns {string}
  */
 function renderWhatsAppButton(lang = 'pt') {
-  const WHATSAPP_NUMBER = '5511999999999';
+  const WHATSAPP_NUMBER = '5581997579346';
   const copy = {
     pt: {
       label: 'Falar no WhatsApp',
