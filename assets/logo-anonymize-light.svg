@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" fill="none" role="img" aria-label="Logomarca ANONYMIZE — Versão Fundo Claro">
+  <defs>
+    <linearGradient id="anm-l-bg" x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0B172E" />
+      <stop offset="100%" stop-color="#060D1A" />
+    </linearGradient>
+    <linearGradient id="anm-l-bar" x1="16" y1="36" x2="48" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00D4FF" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#anm-l-bg)" />
+  <path d="M32 13L16.5 49H23.2L32 27.6L40.8 49H47.5L32 13Z" fill="#FFFFFF" />
+  <rect x="17" y="34.5" width="30" height="7" rx="3.5" fill="url(#anm-l-bar)" />
+  <rect x="22.5" y="37" width="11" height="2" rx="1" fill="#060D1A" opacity="0.72" />
+  <circle cx="40.5" cy="38" r="1.4" fill="#060D1A" opacity="0.72" />
+
+  <text
+    x="78"
+    y="37"
+    fill="#0B1324"
+    font-family="'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif"
+    font-size="27"
+    font-weight="800"
+    letter-spacing="3.2"
+  >ANONYMIZE</text>
+  <text
+    x="79"
+    y="52"
+    fill="#1D4ED8"
+    font-family="'JetBrains Mono', Consolas, monospace"
+    font-size="9.5"
+    font-weight="600"
+    letter-spacing="1.6"
+  >LGPD • LAI • TARJAMENTO IRREVERSÍVEL</text>
+</svg>
