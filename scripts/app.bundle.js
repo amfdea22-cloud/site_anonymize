@@ -3867,7 +3867,7 @@ function renderModal(modalState) {
               <label for="signup-email">E-mail corporativo ou institucional *</label>
               <input id="signup-email" name="email" type="email" required class="form-input" placeholder="nome@organizacao.gov.br" />
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-row-2">
               <div class="form-group">
                 <label for="signup-org">Empresa ou Órgão *</label>
                 <input id="signup-org" name="organization" type="text" required class="form-input" placeholder="Ex.: Prefeitura / Escritório" />
@@ -3936,7 +3936,7 @@ function renderModal(modalState) {
               <label for="demo-email">E-mail profissional *</label>
               <input id="demo-email" name="email" type="email" required class="form-input" placeholder="ricardo@orgao.gov.br" />
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-row-2">
               <div class="form-group">
                 <label for="demo-org">Empresa ou Órgão *</label>
                 <input id="demo-org" name="organization" type="text" required class="form-input" placeholder="Nome da instituição" />
