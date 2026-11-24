@@ -3775,6 +3775,7 @@ function renderPortalProxy() {
 // @ts-check
 const TARGET_EMAIL = 'empresa.hubup@gmail.com';
 const TARGET_WHATSAPP = '5581997579346';
+const WEB3FORMS_ACCESS_KEY = 'c48a615a-6e70-49f9-9ead-c2be3a0c92e2';
 
 /**
  * Monta link mailto: completo com assunto e corpo formatados.
@@ -4620,35 +4621,34 @@ function bindEvents() {
     renderModalOnly();
 
     let sentAutomatically = false;
-    const canUseAjax = window.location.protocol === 'http:' || window.location.protocol === 'https:';
 
-    if (canUseAjax) {
-      try {
-        const res = await fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({
-            _subject: subject,
-            _template: 'table',
-            _captcha: 'false',
-            Tipo: isDemo ? 'Solicitação de Orçamento / Demonstração' : 'Conta Grátis',
-            Nome: name,
-            Email: email,
-            Organizacao: organization || 'Não informado',
-            Telefone_WhatsApp: phone || 'Não informado',
-            Volume_ou_Setor: volume || sector || 'Não informado',
-            Observacoes: notes || 'Sem observações adicionais',
-          }),
-        });
-        if (res.ok) {
-          sentAutomatically = true;
-        }
-      } catch {
-        sentAutomatically = false;
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject,
+          from_name: 'Site ANONYMIZE',
+          replyto: email,
+          Tipo: isDemo ? 'Solicitação de Orçamento / Demonstração' : 'Conta Grátis',
+          Nome: name,
+          Email: email,
+          Organizacao: organization || 'Não informado',
+          Telefone_WhatsApp: phone || 'Não informado',
+          Volume_ou_Setor: volume || sector || 'Não informado',
+          Observacoes: notes || 'Sem observações adicionais',
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json && json.success) {
+        sentAutomatically = true;
       }
+    } catch {
+      sentAutomatically = false;
     }
 
     state.modal.submitting = false;

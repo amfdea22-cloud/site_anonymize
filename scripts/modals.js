@@ -4,6 +4,7 @@ import { esc } from './sections.js';
 
 export const TARGET_EMAIL = 'empresa.hubup@gmail.com';
 export const TARGET_WHATSAPP = '5581997579346';
+export const WEB3FORMS_ACCESS_KEY = 'c48a615a-6e70-49f9-9ead-c2be3a0c92e2';
 
 /**
  * Monta link mailto: completo com assunto e corpo formatados.
