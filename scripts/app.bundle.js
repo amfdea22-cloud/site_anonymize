@@ -3264,9 +3264,9 @@ function renderFooter() {
               LGPD (Lei nº 13.709/2018) e a LAI (Lei nº 12.527/2011).
             </p>
             <div style="display:flex;flex-direction:column;gap:8px;font-size:0.84rem">
-              <a href="mailto:contato@anonymize.com.br" style="display:inline-flex;align-items:center;gap:8px;color:#e2e8f0">
+              <a href="mailto:empresa.hubup@gmail.com" style="display:inline-flex;align-items:center;gap:8px;color:#e2e8f0">
                 ${icon('mail', 15, '#38bdf8')}
-                contato@anonymize.com.br
+                empresa.hubup@gmail.com
               </a>
               <button type="button" data-open-modal="dpo"
                 style="background:none;border:none;padding:0;color:#38bdf8;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:0.84rem;text-align:left">
@@ -3773,52 +3773,123 @@ function renderPortalProxy() {
 
 
 // @ts-check
+const TARGET_EMAIL = 'empresa.hubup@gmail.com';
+const TARGET_WHATSAPP = '5581997579346';
 
 /**
- * Renderiza o modal ativo (Signup, Login, Demo, Cookies, DPO, Termos, Privacidade).
+ * Monta link mailto: completo com assunto e corpo formatados.
+ * @param {string} subject
+ * @param {string} body
+ * @returns {string}
+ */
+function buildMailtoHref(subject, body) {
+  return `mailto:${TARGET_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/**
+ * Monta link wa.me com o resumo do orçamento.
+ * @param {string} text
+ * @returns {string}
+ */
+function buildWhatsappHref(text) {
+  return `https://wa.me/${TARGET_WHATSAPP}?text=${encodeURIComponent(text)}`;
+}
+
+/**
+ * Renderiza o modal ativo (Signup, Login, Demo/Orçamento, Cookies, DPO, Termos, Privacidade, API).
  * @param {{
  *   activeModal: import('./data.js').ModalType | null,
+ *   submitting?: boolean,
  *   submittedMessage: string | null,
+ *   submittedMailto?: string | null,
+ *   submittedWhatsapp?: string | null,
+ *   submittedStatus?: 'sent' | 'fallback' | null,
+ *   prefillPages?: number,
  *   cookies: { analytics: boolean, functional: boolean }
  * }} modalState
  * @returns {string}
  */
 function renderModal(modalState) {
-  const { activeModal, submittedMessage, cookies } = modalState;
+  const {
+    activeModal,
+    submitting,
+    submittedMessage,
+    submittedMailto,
+    submittedWhatsapp,
+    submittedStatus,
+    prefillPages,
+    cookies,
+  } = modalState;
   if (!activeModal) return '';
+
+  const renderSubmittedView = (badgeText) => `
+    <div class="status-pill ${submittedStatus === 'fallback' ? 'status-warning' : 'status-positive'}" style="margin-bottom:14px">
+      ${icon(submittedStatus === 'fallback' ? 'mail' : 'check-circle', 14)} ${esc(badgeText)}
+    </div>
+    <p style="margin:0 0 16px;color:var(--text-secondary);font-size:0.92rem;line-height:1.6">${esc(submittedMessage || '')}</p>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      ${
+        submittedMailto
+          ? `<a href="${submittedMailto}" class="btn btn-primary" style="width:100%">
+              ${icon('mail', 16)} Abrir no meu aplicativo de e-mail (${TARGET_EMAIL})
+            </a>`
+          : ''
+      }
+      ${
+        submittedWhatsapp
+          ? `<a href="${submittedWhatsapp}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-light" style="width:100%">
+              Enviar resumo também pelo WhatsApp
+            </a>`
+          : ''
+      }
+      <button type="button" class="btn btn-dark-solid" style="width:100%" data-close-modal>Concluir</button>
+    </div>
+  `;
 
   /** @type {Record<string, { title: string, subtitle: string, body: string }>} */
   const configs = {
     signup: {
       title: 'Criar conta grátis na ANONYMIZE',
-      subtitle: 'Teste a IA com até 50 páginas/mês, OCR neural e remoção real da camada textual.',
+      subtitle: `Solicitação direcionada para ${TARGET_EMAIL} • Teste com até 50 páginas/mês e OCR neural.`,
       body: submittedMessage
-        ? `<div class="status-pill status-positive" style="margin-bottom:14px">${icon('check-circle', 14)} Conta de teste preparada</div>
-           <p style="margin:0 0 18px;color:var(--text-secondary)">${submittedMessage}</p>
-           <button type="button" class="btn btn-dark-solid" style="width:100%" data-close-modal>Concluir</button>`
+        ? renderSubmittedView(
+            submittedStatus === 'fallback'
+              ? 'Pronto para enviar por e-mail'
+              : 'Solicitação enviada para nossa equipe'
+          )
         : `<form data-modal-form="signup">
             <div class="form-group">
-              <label for="signup-name">Nome completo</label>
+              <label for="signup-name">Nome completo *</label>
               <input id="signup-name" name="name" type="text" required class="form-input" placeholder="Ex.: Dra. Fernanda Oliveira" />
             </div>
             <div class="form-group">
-              <label for="signup-email">E-mail corporativo ou institucional</label>
+              <label for="signup-email">E-mail corporativo ou institucional *</label>
               <input id="signup-email" name="email" type="email" required class="form-input" placeholder="nome@organizacao.gov.br" />
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-group">
+                <label for="signup-org">Empresa ou Órgão *</label>
+                <input id="signup-org" name="organization" type="text" required class="form-input" placeholder="Ex.: Prefeitura / Escritório" />
+              </div>
+              <div class="form-group">
+                <label for="signup-phone">Telefone / WhatsApp</label>
+                <input id="signup-phone" name="phone" type="tel" class="form-input" placeholder="(81) 99999-9999" />
+              </div>
             </div>
             <div class="form-group">
               <label for="signup-sector">Perfil da organização</label>
               <select id="signup-sector" name="sector" class="form-input">
-                <option value="Órgão Público / LAI">Órgão Público / Transparência LAI</option>
+                <option value="Órgão Público / Transparência LAI">Órgão Público / Transparência LAI</option>
                 <option value="Departamento Jurídico / Escritório">Departamento Jurídico / Escritório</option>
                 <option value="Compliance / DPO">Compliance / DPO</option>
-                <option value="Saúde">Saúde / Pesquisa Clínica</option>
-                <option value="Financeiro">Financeiro / Seguros</option>
-                <option value="Engenharia / TI">Engenharia / TI / API</option>
+                <option value="Saúde / Pesquisa Clínica">Saúde / Pesquisa Clínica</option>
+                <option value="Financeiro / Seguros">Financeiro / Seguros</option>
+                <option value="Engenharia / TI / API">Engenharia / TI / API</option>
               </select>
             </div>
-            <button type="submit" class="btn btn-primary" style="width:100%">
-              Ativar acesso gratuito agora
-              ${icon('arrow-right', 16)}
+            <button type="submit" class="btn btn-primary" style="width:100%" ${submitting ? 'disabled' : ''}>
+              ${submitting ? 'Enviando solicitação...' : 'Ativar acesso gratuito agora'}
+              ${submitting ? '' : icon('arrow-right', 16)}
             </button>
           </form>`,
     },
@@ -3827,7 +3898,7 @@ function renderModal(modalState) {
       subtitle: 'Acesse sua workspace ANONYMIZE, filas de lote e trilhas de auditoria SHA-256.',
       body: submittedMessage
         ? `<div class="status-pill status-positive" style="margin-bottom:14px">${icon('lock', 14)} Autenticação simulada</div>
-           <p style="margin:0 0 18px;color:var(--text-secondary)">${submittedMessage}</p>
+           <p style="margin:0 0 18px;color:var(--text-secondary)">${esc(submittedMessage)}</p>
            <button type="button" class="btn btn-dark-solid" style="width:100%" data-close-modal>Voltar ao site</button>`
         : `<form data-modal-form="login">
             <div class="form-group">
@@ -3847,31 +3918,49 @@ function renderModal(modalState) {
           </form>`,
     },
     demo: {
-      title: 'Agendar Demonstração Técnica',
-      subtitle: 'Apresentação personalizada com foco em SEI, PJe, API REST, LGPD e LAI.',
+      title: 'Solicitar Orçamento & Demonstração',
+      subtitle: `Envio direto para ${TARGET_EMAIL} • Proposta personalizada para LGPD, LAI, SEI, PJe e API.`,
       body: submittedMessage
-        ? `<div class="status-pill status-positive" style="margin-bottom:14px">${icon('calendar', 14)} Solicitação registrada</div>
-           <p style="margin:0 0 18px;color:var(--text-secondary)">${submittedMessage}</p>
-           <button type="button" class="btn btn-dark-solid" style="width:100%" data-close-modal>Fechar</button>`
+        ? renderSubmittedView(
+            submittedStatus === 'fallback'
+              ? 'Orçamento pronto para envio por e-mail'
+              : 'Orçamento enviado para empresa.hubup@gmail.com'
+          )
         : `<form data-modal-form="demo">
             <div class="form-group">
-              <label for="demo-name">Seu nome</label>
+              <label for="demo-name">Seu nome completo *</label>
               <input id="demo-name" name="name" type="text" required class="form-input" placeholder="Ex.: Ricardo Mendes" />
             </div>
             <div class="form-group">
-              <label for="demo-email">E-mail profissional</label>
+              <label for="demo-email">E-mail profissional *</label>
               <input id="demo-email" name="email" type="email" required class="form-input" placeholder="ricardo@orgao.gov.br" />
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-group">
+                <label for="demo-org">Empresa ou Órgão *</label>
+                <input id="demo-org" name="organization" type="text" required class="form-input" placeholder="Nome da instituição" />
+              </div>
+              <div class="form-group">
+                <label for="demo-phone">Telefone / WhatsApp *</label>
+                <input id="demo-phone" name="phone" type="tel" required class="form-input" placeholder="(81) 99999-9999" />
+              </div>
             </div>
             <div class="form-group">
               <label for="demo-volume">Volume estimado de páginas/mês</label>
               <select id="demo-volume" name="volume" class="form-input">
-                <option value="Até 2.000 páginas">Até 2.000 páginas/mês</option>
-                <option value="2.000 a 20.000 páginas">2.000 a 20.000 páginas/mês</option>
-                <option value="Acima de 20.000 páginas (API / Lote)">Acima de 20.000 páginas (API / Lote)</option>
+                <option value="Até 2.000 páginas/mês" ${!prefillPages || prefillPages <= 2000 ? 'selected' : ''}>Até 2.000 páginas/mês</option>
+                <option value="2.000 a 10.000 páginas/mês" ${prefillPages && prefillPages > 2000 && prefillPages <= 10000 ? 'selected' : ''}>2.000 a 10.000 páginas/mês</option>
+                <option value="10.000 a 50.000 páginas/mês" ${prefillPages && prefillPages > 10000 ? 'selected' : ''}>10.000 a 50.000 páginas/mês</option>
+                <option value="Acima de 50.000 páginas/mês (API / Governo)">Acima de 50.000 páginas/mês (API / Governo)</option>
               </select>
             </div>
-            <button type="submit" class="btn btn-primary" style="width:100%">
-              Solicitar agenda com especialista
+            <div class="form-group">
+              <label for="demo-notes">Detalhes da necessidade ou documentos (opcional)</label>
+              <textarea id="demo-notes" name="notes" rows="3" class="form-input" placeholder="Ex.: Tarjamento de processos no SEI, integração via API REST, implantação on-premises..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%" ${submitting ? 'disabled' : ''}>
+              ${submitting ? 'Enviando orçamento...' : 'Enviar solicitação de orçamento'}
+              ${submitting ? '' : icon('arrow-right', 16)}
             </button>
           </form>`,
     },
@@ -3912,11 +4001,11 @@ function renderModal(modalState) {
         <p style="margin:0 0 12px;font-size:0.92rem;color:var(--text-secondary)">
           Nos termos do Art. 41 da Lei nº 13.709/2018 (LGPD), o Encarregado pelo Tratamento de Dados
           Pessoais (DPO) da <strong>ANONYMIZE</strong> recebe solicitações de titulares, órgãos
-          públicos e comunicações da ANPD pelo canal oficial:
+          públicos e comunicações da ANPD pelos canais oficiais:
         </p>
         <div style="background:#f8fafc;border:1px solid var(--border-light);border-radius:12px;padding:14px 16px;margin-bottom:18px" class="mono">
-          <div><strong>E-mail DPO:</strong> dpo@anonymize.com.br</div>
-          <div><strong>Comercial:</strong> contato@anonymize.com.br</div>
+          <div><strong>E-mail Comercial / Orçamentos:</strong> ${TARGET_EMAIL}</div>
+          <div><strong>Canal DPO:</strong> dpo@anonymize.com.br</div>
           <div><strong>SLA Titulares:</strong> até 5 dias úteis</div>
         </div>
         <button type="button" class="btn btn-dark-solid" style="width:100%" data-close-modal>Entendido</button>`,
@@ -3946,8 +4035,8 @@ function renderModal(modalState) {
           modelos de IA de terceiros.
         </p>
         <p style="margin:0 0 18px;font-size:0.9rem;color:var(--text-secondary)">
-          Para exercer direitos previstos no Art. 18 da LGPD, acione nosso Encarregado em
-          <strong>dpo@anonymize.com.br</strong>.
+          Para exercer direitos previstos no Art. 18 da LGPD, acione nosso atendimento em
+          <strong>${TARGET_EMAIL}</strong>.
         </p>
         <button type="button" class="btn btn-dark-solid" style="width:100%" data-close-modal>Fechar</button>`,
     },
@@ -4054,8 +4143,16 @@ const state = {
   modal: {
     /** @type {import('./data.js').ModalType | null} */
     activeModal: null,
+    submitting: false,
     /** @type {string | null} */
     submittedMessage: null,
+    /** @type {string | null} */
+    submittedMailto: null,
+    /** @type {string | null} */
+    submittedWhatsapp: null,
+    /** @type {'sent' | 'fallback' | null} */
+    submittedStatus: null,
+    prefillPages: 1000,
     cookies: {
       functional: true,
       analytics: false,
@@ -4213,7 +4310,12 @@ function bindEvents() {
         state.openDropdown = null;
         renderHeaderSlot();
         state.modal.activeModal = /** @type {import('./data.js').ModalType} */ (type);
+        state.modal.submitting = false;
         state.modal.submittedMessage = null;
+        state.modal.submittedMailto = null;
+        state.modal.submittedWhatsapp = null;
+        state.modal.submittedStatus = null;
+        state.modal.prefillPages = state.roi.pagesPerMonth;
         renderModalOnly();
       }
       return;
@@ -4222,7 +4324,11 @@ function bindEvents() {
     // Close modal
     if (target.closest('[data-close-modal]') || target.matches('[data-modal-backdrop]')) {
       state.modal.activeModal = null;
+      state.modal.submitting = false;
       state.modal.submittedMessage = null;
+      state.modal.submittedMailto = null;
+      state.modal.submittedWhatsapp = null;
+      state.modal.submittedStatus = null;
       renderModalOnly();
       return;
     }
@@ -4467,8 +4573,8 @@ function bindEvents() {
     }
   });
 
-  // Modal form submissions
-  document.addEventListener('submit', (event) => {
+  // Modal form submissions (com envio real direcionado para empresa.hubup@gmail.com + fallback mailto/WhatsApp)
+  document.addEventListener('submit', async (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
     const kind = form.getAttribute('data-modal-form');
@@ -4476,15 +4582,85 @@ function bindEvents() {
 
     event.preventDefault();
     const data = new FormData(form);
-    const email = String(data.get('email') || '');
-    const name = String(data.get('name') || '');
+    const email = String(data.get('email') || '').trim();
+    const name = String(data.get('name') || '').trim();
+    const organization = String(data.get('organization') || '').trim();
+    const phone = String(data.get('phone') || '').trim();
+    const volume = String(data.get('volume') || '').trim();
+    const sector = String(data.get('sector') || '').trim();
+    const notes = String(data.get('notes') || '').trim();
 
-    if (kind === 'signup') {
-      state.modal.submittedMessage = `Ambiente gratuito reservado para ${name} (${email}). Você já pode carregar seu primeiro PDF para testar o OCR neural e a remoção irreversível da camada de texto.`;
-    } else if (kind === 'login') {
+    if (kind === 'login') {
       state.modal.submittedMessage = `Credenciais validadas em modo demonstração para ${email}. Em produção, você será direcionado ao painel com SSO e trilha de auditoria SHA-256.`;
-    } else if (kind === 'demo') {
-      state.modal.submittedMessage = `Recebemos o pedido de demonstração para ${name} (${email}). Nossa equipe técnica de conformidade LGPD/LAI entrará em contato em até 1 dia útil.`;
+      renderModalOnly();
+      return;
+    }
+
+    const isDemo = kind === 'demo';
+    const subject = isDemo
+      ? `[ANONYMIZE] Solicitação de Orçamento / Demo — ${organization || name}`
+      : `[ANONYMIZE] Novo Cadastro Conta Grátis — ${organization || name}`;
+
+    const summaryLines = [
+      isDemo ? 'SOLICITAÇÃO DE ORÇAMENTO / DEMONSTRAÇÃO — ANONYMIZE' : 'SOLICITAÇÃO DE CONTA GRÁTIS — ANONYMIZE',
+      `Nome: ${name}`,
+      `E-mail: ${email}`,
+      organization ? `Empresa / Órgão: ${organization}` : '',
+      phone ? `Telefone / WhatsApp: ${phone}` : '',
+      volume ? `Volume estimado: ${volume}` : '',
+      sector ? `Perfil / Setor: ${sector}` : '',
+      notes ? `Observações: ${notes}` : '',
+    ].filter(Boolean);
+
+    const plainBody = summaryLines.join('\n');
+    const mailtoHref = buildMailtoHref(subject, plainBody);
+    const whatsappHref = buildWhatsappHref(plainBody);
+
+    state.modal.submitting = true;
+    renderModalOnly();
+
+    let sentAutomatically = false;
+    const canUseAjax = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+
+    if (canUseAjax) {
+      try {
+        const res = await fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            _subject: subject,
+            _template: 'table',
+            _captcha: 'false',
+            Tipo: isDemo ? 'Solicitação de Orçamento / Demonstração' : 'Conta Grátis',
+            Nome: name,
+            Email: email,
+            Organizacao: organization || 'Não informado',
+            Telefone_WhatsApp: phone || 'Não informado',
+            Volume_ou_Setor: volume || sector || 'Não informado',
+            Observacoes: notes || 'Sem observações adicionais',
+          }),
+        });
+        if (res.ok) {
+          sentAutomatically = true;
+        }
+      } catch {
+        sentAutomatically = false;
+      }
+    }
+
+    state.modal.submitting = false;
+    state.modal.submittedMailto = mailtoHref;
+    state.modal.submittedWhatsapp = whatsappHref;
+
+    if (sentAutomatically) {
+      state.modal.submittedStatus = 'sent';
+      state.modal.submittedMessage = `Solicitação enviada com sucesso para ${TARGET_EMAIL}! Nossa equipe responderá para ${email} em até 1 dia útil. Se desejar agilizar, você também pode enviar o resumo pelo WhatsApp abaixo.`;
+    } else {
+      state.modal.submittedStatus = 'fallback';
+      state.modal.submittedMessage = `Preparamos sua solicitação direcionada para ${TARGET_EMAIL}. Clique no botão abaixo para abrir seu aplicativo de e-mail já preenchido ou enviar diretamente pelo WhatsApp.`;
     }
     renderModalOnly();
   });

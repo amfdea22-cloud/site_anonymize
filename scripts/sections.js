@@ -1358,9 +1358,9 @@ export function renderFooter() {
               LGPD (Lei nº 13.709/2018) e a LAI (Lei nº 12.527/2011).
             </p>
             <div style="display:flex;flex-direction:column;gap:8px;font-size:0.84rem">
-              <a href="mailto:contato@anonymize.com.br" style="display:inline-flex;align-items:center;gap:8px;color:#e2e8f0">
+              <a href="mailto:empresa.hubup@gmail.com" style="display:inline-flex;align-items:center;gap:8px;color:#e2e8f0">
                 ${icon('mail', 15, '#38bdf8')}
-                contato@anonymize.com.br
+                empresa.hubup@gmail.com
               </a>
               <button type="button" data-open-modal="dpo"
                 style="background:none;border:none;padding:0;color:#38bdf8;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:0.84rem;text-align:left">

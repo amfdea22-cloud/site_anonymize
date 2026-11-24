@@ -22,7 +22,12 @@ import {
   renderMultiformatAndSuite,
   renderPortalProxy,
 } from './areas.js';
-import { renderModal } from './modals.js';
+import {
+  TARGET_EMAIL,
+  buildMailtoHref,
+  buildWhatsappHref,
+  renderModal,
+} from './modals.js';
 
 const state = {
   /** @type {'pt' | 'en' | 'es'} */
@@ -68,8 +73,16 @@ const state = {
   modal: {
     /** @type {import('./data.js').ModalType | null} */
     activeModal: null,
+    submitting: false,
     /** @type {string | null} */
     submittedMessage: null,
+    /** @type {string | null} */
+    submittedMailto: null,
+    /** @type {string | null} */
+    submittedWhatsapp: null,
+    /** @type {'sent' | 'fallback' | null} */
+    submittedStatus: null,
+    prefillPages: 1000,
     cookies: {
       functional: true,
       analytics: false,
@@ -227,7 +240,12 @@ function bindEvents() {
         state.openDropdown = null;
         renderHeaderSlot();
         state.modal.activeModal = /** @type {import('./data.js').ModalType} */ (type);
+        state.modal.submitting = false;
         state.modal.submittedMessage = null;
+        state.modal.submittedMailto = null;
+        state.modal.submittedWhatsapp = null;
+        state.modal.submittedStatus = null;
+        state.modal.prefillPages = state.roi.pagesPerMonth;
         renderModalOnly();
       }
       return;
@@ -236,7 +254,11 @@ function bindEvents() {
     // Close modal
     if (target.closest('[data-close-modal]') || target.matches('[data-modal-backdrop]')) {
       state.modal.activeModal = null;
+      state.modal.submitting = false;
       state.modal.submittedMessage = null;
+      state.modal.submittedMailto = null;
+      state.modal.submittedWhatsapp = null;
+      state.modal.submittedStatus = null;
       renderModalOnly();
       return;
     }
@@ -481,8 +503,8 @@ function bindEvents() {
     }
   });
 
-  // Modal form submissions
-  document.addEventListener('submit', (event) => {
+  // Modal form submissions (com envio real direcionado para empresa.hubup@gmail.com + fallback mailto/WhatsApp)
+  document.addEventListener('submit', async (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
     const kind = form.getAttribute('data-modal-form');
@@ -490,15 +512,85 @@ function bindEvents() {
 
     event.preventDefault();
     const data = new FormData(form);
-    const email = String(data.get('email') || '');
-    const name = String(data.get('name') || '');
+    const email = String(data.get('email') || '').trim();
+    const name = String(data.get('name') || '').trim();
+    const organization = String(data.get('organization') || '').trim();
+    const phone = String(data.get('phone') || '').trim();
+    const volume = String(data.get('volume') || '').trim();
+    const sector = String(data.get('sector') || '').trim();
+    const notes = String(data.get('notes') || '').trim();
 
-    if (kind === 'signup') {
-      state.modal.submittedMessage = `Ambiente gratuito reservado para ${name} (${email}). Você já pode carregar seu primeiro PDF para testar o OCR neural e a remoção irreversível da camada de texto.`;
-    } else if (kind === 'login') {
+    if (kind === 'login') {
       state.modal.submittedMessage = `Credenciais validadas em modo demonstração para ${email}. Em produção, você será direcionado ao painel com SSO e trilha de auditoria SHA-256.`;
-    } else if (kind === 'demo') {
-      state.modal.submittedMessage = `Recebemos o pedido de demonstração para ${name} (${email}). Nossa equipe técnica de conformidade LGPD/LAI entrará em contato em até 1 dia útil.`;
+      renderModalOnly();
+      return;
+    }
+
+    const isDemo = kind === 'demo';
+    const subject = isDemo
+      ? `[ANONYMIZE] Solicitação de Orçamento / Demo — ${organization || name}`
+      : `[ANONYMIZE] Novo Cadastro Conta Grátis — ${organization || name}`;
+
+    const summaryLines = [
+      isDemo ? 'SOLICITAÇÃO DE ORÇAMENTO / DEMONSTRAÇÃO — ANONYMIZE' : 'SOLICITAÇÃO DE CONTA GRÁTIS — ANONYMIZE',
+      `Nome: ${name}`,
+      `E-mail: ${email}`,
+      organization ? `Empresa / Órgão: ${organization}` : '',
+      phone ? `Telefone / WhatsApp: ${phone}` : '',
+      volume ? `Volume estimado: ${volume}` : '',
+      sector ? `Perfil / Setor: ${sector}` : '',
+      notes ? `Observações: ${notes}` : '',
+    ].filter(Boolean);
+
+    const plainBody = summaryLines.join('\n');
+    const mailtoHref = buildMailtoHref(subject, plainBody);
+    const whatsappHref = buildWhatsappHref(plainBody);
+
+    state.modal.submitting = true;
+    renderModalOnly();
+
+    let sentAutomatically = false;
+    const canUseAjax = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+
+    if (canUseAjax) {
+      try {
+        const res = await fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            _subject: subject,
+            _template: 'table',
+            _captcha: 'false',
+            Tipo: isDemo ? 'Solicitação de Orçamento / Demonstração' : 'Conta Grátis',
+            Nome: name,
+            Email: email,
+            Organizacao: organization || 'Não informado',
+            Telefone_WhatsApp: phone || 'Não informado',
+            Volume_ou_Setor: volume || sector || 'Não informado',
+            Observacoes: notes || 'Sem observações adicionais',
+          }),
+        });
+        if (res.ok) {
+          sentAutomatically = true;
+        }
+      } catch {
+        sentAutomatically = false;
+      }
+    }
+
+    state.modal.submitting = false;
+    state.modal.submittedMailto = mailtoHref;
+    state.modal.submittedWhatsapp = whatsappHref;
+
+    if (sentAutomatically) {
+      state.modal.submittedStatus = 'sent';
+      state.modal.submittedMessage = `Solicitação enviada com sucesso para ${TARGET_EMAIL}! Nossa equipe responderá para ${email} em até 1 dia útil. Se desejar agilizar, você também pode enviar o resumo pelo WhatsApp abaixo.`;
+    } else {
+      state.modal.submittedStatus = 'fallback';
+      state.modal.submittedMessage = `Preparamos sua solicitação direcionada para ${TARGET_EMAIL}. Clique no botão abaixo para abrir seu aplicativo de e-mail já preenchido ou enviar diretamente pelo WhatsApp.`;
     }
     renderModalOnly();
   });
